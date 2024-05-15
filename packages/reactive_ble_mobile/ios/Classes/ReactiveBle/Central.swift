@@ -90,9 +90,21 @@ final class Central {
                     return
                 }
 
+                let err: Error? = {
+                    guard let nserror = error as NSError?
+                    else { return error }
+                    if (nserror.domain == "CBATTErrorDomain"
+                        && (nserror.code == 3
+                            || nserror.code == 10 && (characteristic.descriptors?.isEmpty ?? true) == true
+                        )) {
+                        return nil
+                    }
+                    return error
+                }()
+
                 central.characteristicNotifyRegistry.updateTask(
                     key: q,
-                    action: { $0.complete(error: error) }
+                    action: { $0.complete(error: err) }
                 )
             },
             onCharacteristicValueUpdate: papply(weak: self) { central, characteristic, error in
